@@ -10,17 +10,15 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 
-print(os.listdir())
-print(os.getcwd())
-DS_STORE='.DS_Store'
 
+DS_STORE='.DS_Store'
 RGB="RGB"
 IMG_SIZE = (128,128)
 train_folder = os.getcwd()+"/Database/training-data"
 image_database=os.getcwd()+"/Database"
 
 class DataManager:
-    def resize_image(src_image, size, bg_color="white"):
+    def resizeImage(src_image, size, bg_color="white"):
         src_image.thumbnail(size, Image.ANTIALIAS)
         new_image = Image.new(RGB, size, bg_color)
         new_image.paste(src_image, (int((size[0] - src_image.size[0]) / 2), int((size[1] - src_image.size[1]) / 2)))
@@ -44,11 +42,13 @@ class DataManager:
                     if file_name!=DS_STORE:
                         file_path = os.path.join(root,sub_folder, file_name)
                         image = Image.open(file_path)
-                        resized_image = self.resize_image(image,IMG_SIZE)
+                        resized_image = self.resizeImage(image,IMG_SIZE)
                         saveAs = os.path.join(saveFolder, file_name)
                         resized_image.save(saveAs)
 
-    def load_dataset(data_path):
+        return "Transformed Data"
+
+    def loadImages(data_path):
         # Load all the images
         transformation = transforms.Compose([
             # Randomly augment the image data
@@ -95,7 +95,6 @@ class DataManager:
 
 
     # call in model calass
-    train_loader, test_loader = load_dataset(train_folder)
+    train_loader, test_loader = loadImages(train_folder)
     batch_size = train_loader.batch_size
     print("Data loaders ready to read", train_folder)
-
