@@ -27,11 +27,9 @@ def transformImages():
     msg=""
     try:
         train_folder=os.getcwd()+"/Database/training-data"
-        print(os.path.exists(train_folder))
         if os.path.exists(train_folder):
             shutil.rmtree(train_folder)
         for root, folders, files in os.walk(image_database):
-            print("root"+root)
             print("Classes :",folders)
             for sub in folders:
                 print('processing folder ' + sub)
@@ -55,8 +53,7 @@ def loadImages(data_path):
     dataset = torchvision.datasets.ImageFolder(root=data_path,transform=transformation)
     train_size = int(0.6 * len(dataset))
     test_size = len(dataset) - train_size
-    # use torch.utils.data.random_split for training/test split
     train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
-    train_loader = torch.utils.data.DataLoader(train_dataset,batch_size=50,num_workers=2,shuffle=False)
-    test_loader = torch.utils.data.DataLoader(test_dataset,batch_size=50,num_workers=2,shuffle=False)
+    train_loader = torch.utils.data.DataLoader(train_dataset,batch_size=50,num_workers=0,shuffle=False)
+    test_loader = torch.utils.data.DataLoader(test_dataset,batch_size=50,num_workers=0,shuffle=False)
     return train_loader, test_loader
