@@ -9,6 +9,7 @@ import shutil
 import torch
 import torchvision
 import torchvision.transforms as transforms
+from sklearn.model_selection import KFold
 
 
 DS_STORE='.DS_Store'
@@ -19,82 +20,46 @@ image_database=os.getcwd()+"/Database"
 
 class DataManager:
     def resizeImage(src_image, size, bg_color="white"):
-        src_image.thumbnail(size, Image.ANTIALIAS)
-        new_image = Image.new(RGB, size, bg_color)
-        new_image.paste(src_image, (int((size[0] - src_image.size[0]) / 2), int((size[1] - src_image.size[1]) / 2)))
-        return new_image
+        try:
+            src_image.thumbnail(size, Image.ANTIALIAS)
+            new_image = Image.new(RGB, size, bg_color)
+            new_image.paste(src_image, (int((size[0] - src_image.size[0]) / 2), int((size[1] - src_image.size[1]) / 2)))
+            return new_image
+        except:
+            print("Issue occured while resizing images")
 
     def transformImages(self):
+        try:
+            print(os.path.exists(train_folder))
+            if os.path.exists(train_folder):
+                shutil.rmtree(train_folder)
+            for root, folders, files in os.walk(image_database):
+                print("root"+root)
+                print("Classes :",folders)
+                for sub in folders:
+                    print('processing folder ' + sub)
+                    newLoc = os.path.join(train_folder,sub)
+                    if not os.path.exists(newLoc):
+                        os.makedirs(newLoc)
+                    file_names = os.listdir(os.path.join(root,sub))
+                    for file in file_names:
+                        if file!=DS_STORE:
+                            resized_image = self.resizeImage(Image.open(os.path.join(root,sub,file)),IMG_SIZE)
+                            newPath = os.path.join(newLoc, file)
+                            resized_image.save(newPath)
 
-        if os.path.exists(train_folder):
-             shutil.rmtree(train_folder)
+            print("Transformation Step complete")
+        except:
+            print("Error Occured in TransformData")
 
-        for root, folders, files in os.walk(image_database):
-            print(folders)
-            for sub_folder in folders:
-                print('processing folder ' + sub_folder)
-                # Create a matching subfolder in the output dir
-                saveFolder = os.path.join(train_folder,sub_folder)
-                if not os.path.exists(saveFolder):
-                    os.makedirs(saveFolder)
-                file_names = os.listdir(os.path.join(root,sub_folder))
-                for file_name in file_names:
-                    if file_name!=DS_STORE:
-                        file_path = os.path.join(root,sub_folder, file_name)
-                        image = Image.open(file_path)
-                        resized_image = self.resizeImage(image,IMG_SIZE)
-                        saveAs = os.path.join(saveFolder, file_name)
-                        resized_image.save(saveAs)
-
-        return "Transformed Data"
 
     def loadImages(data_path):
-        # Load all the images
-        transformation = transforms.Compose([
-            # Randomly augment the image data
-            # Random horizontal flip
-            transforms.RandomHorizontalFlip(0.5),
-            # Random vertical flip
-            transforms.RandomVerticalFlip(0.3),
-            # transform to tensors
-            transforms.ToTensor(),
-            # Normalize the pixel values (in R, G, and B channels)
-            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
-        ])
-
-        # Load all of the images, transforming them
-        full_dataset = torchvision.datasets.ImageFolder(
-            root=data_path,
-            transform=transformation
-        )
-
-        ### can be replaced by k folds
-        # Split into training (70% and testing (30%) datasets)
-        train_size = int(0.7 * len(full_dataset))
-        test_size = len(full_dataset) - train_size
+        transformation = transforms.Compose([transforms.ToTensor(),transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
+        dataset = torchvision.datasets.ImageFolder(root=data_path,transform=transformation)
+        train_size = int(0.6 * len(dataset))
+        test_size = len(dataset) - train_size
         # use torch.utils.data.random_split for training/test split
-        train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size])
-
-        # define a loader for the training data we can iterate through in 50-image batches
-        train_loader = torch.utils.data.DataLoader(
-            train_dataset,
-            batch_size=50,
-            num_workers=0,
-            shuffle=False
-        )
-
-        # define a loader for the testing data we can iterate through in 50-image batches
-        test_loader = torch.utils.data.DataLoader(
-            test_dataset,
-            batch_size=50,
-            num_workers=0,
-            shuffle=False
-        )
-
+        train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
+        train_loader = torch.utils.data.DataLoader(train_dataset,batch_size=50,num_workers=2,shuffle=False)
+        test_loader = torch.utils.data.DataLoader(test_dataset,batch_size=50,num_workers=2,shuffle=False)
         return train_loader, test_loader
-
-
-    # call in model calass
-    train_loader, test_loader = loadImages(train_folder)
-    batch_size = train_loader.batch_size
-    print("Data loaders ready to read", train_folder)
