@@ -6,7 +6,9 @@ import os
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import KFold
 import numpy as np
+
 
 num_epochs = 10
 num_classes = 3
@@ -18,6 +20,7 @@ print("Transformation Complete. Loading Data")
 print(transformMsg)
 test_loader,train_loader=dm.loadImages(training)
 classes = sorted(os.listdir(training))
+accuracies = []
 
 def model_create():
 
@@ -83,15 +86,23 @@ def test_model(model, test_loader):
         correct += (predicted == labels).sum().item()
         print('Test Accuracy of the model: {} %'
               .format((correct / total) * 100))
+        accuracies.append((correct / total) * 100)
 
 model=model_create()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 loss_criteria = nn.CrossEntropyLoss()
-print('Training Model')
-model_train(model, train_loader, optimizer, num_epochs)
-print('Testing Model')
-test_model(model, test_loader)
+# print('Training Model')
+# model_train(model, train_loader, optimizer, num_epochs)
+# print('Testing Model')
+# test_model(model, test_loader)
 
+kfold = KFold(5, True, None)
+for train, test in kfold.split(train_loader):
+    model_train(model, train, optimizer, num_epochs)
+    test_model(model, test)
+print('Mean accuracy of the model : {} %'
+      .format(np.mean(accuracies)))
+test_model(model, test_loader)
 
 actual = []
 predictions = []
