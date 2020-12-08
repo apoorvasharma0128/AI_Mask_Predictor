@@ -10,7 +10,7 @@ import torchvision.transforms as transforms
 DS_STORE='.DS_Store'
 RGB="RGB"
 bg_color="white"
-IMG_SIZE = (256,256)
+IMG_SIZE = (128,128)
 
 image_database=os.getcwd()+"/Database"
 def transformImages():
