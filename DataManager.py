@@ -5,7 +5,7 @@ import shutil
 import torch
 import torchvision
 import torchvision.transforms as transforms
-
+import numpy as np
 
 DS_STORE='.DS_Store'
 RGB="RGB"
@@ -13,6 +13,7 @@ bg_color="white"
 IMG_SIZE = (128,128)
 
 image_database=os.getcwd()+"/Database"
+
 def transformImages():
     msgs=""
     try:
@@ -40,7 +41,6 @@ def transformImages():
         mgs=("Error Occured in TransformData")
     return msgs
 
-
 def loadImages(data_path):
     transformation = transforms.Compose([transforms.ToTensor(),transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
     dataset = torchvision.datasets.ImageFolder(root=data_path,transform=transformation)
@@ -50,3 +50,10 @@ def loadImages(data_path):
     train_loader = torch.utils.data.DataLoader(train_dataset,batch_size=50,num_workers=0,shuffle=False)
     test_loader = torch.utils.data.DataLoader(test_dataset,batch_size=50,num_workers=0,shuffle=False)
     return train_loader, test_loader
+
+def loadImages1123(data_path):
+    transformation = transforms.Compose([transforms.ToTensor(),transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
+    dataset = torchvision.datasets.ImageFolder(root=data_path,transform=transformation)
+    labels = np.array([y for x, y in iter(dataset)])
+    return dataset
+
