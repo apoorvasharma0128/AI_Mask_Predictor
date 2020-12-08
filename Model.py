@@ -22,22 +22,37 @@ classes = sorted(os.listdir(training))
 def model_create():
 
     class Net(nn.Module):
-
         def __init__(self, num_classes=3):
             super(Net, self).__init__()
-            self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1)
-            self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1)
-            self.pool = nn.MaxPool2d(kernel_size=2)
-            self.drop = nn.Dropout2d(p=0.1)
-            self.fc = nn.Linear(in_features=64 * 64* 32, out_features=num_classes)
+            self.conv1 = self.hidden_layers(3,16)
+            self.conv2 = self.hidden_layers(16,32)
+            self.conv3 = self.hidden_layers(32,64)
+            self.conv4 = self.hidden_layers(64,128)
+            self.conv5 = nn.Sequential(
+                torch.nn.Linear(128*8*8, 3),
+                torch.nn.Sigmoid()
+            )
+
+
+        def hidden_layers(self, in_channel, out_channel):
+            return nn.Sequential(
+            nn.Conv2d(in_channel, out_channel, 3, 1, 1),
+            nn.MaxPool2d(2),
+            # nn.Linear(input, output),
+            nn.LeakyReLU(0.2),
+            nn.Dropout(0.1))
 
         def forward(self, x):
-            x = F.relu(self.pool(self.conv1(x)))
-            x = F.relu(self.pool(self.conv2(x)))
-            x = F.dropout(self.drop(x), training=self.training)
-            x = x.view(-1, 64 * 64 * 32)
-            x = self.fc(x)
-            return torch.log_softmax(x, dim=1)
+            #print(x.shape)
+            x = self.conv1(x)
+            #print(x.shape)
+            x = self.conv2(x)
+            x = self.conv3(x)
+            x = self.conv4(x)
+            #print(x.shape)
+            x = x.view(-1, 128 * 8 * 8)
+            x = self.conv5(x)
+            return x
 
     model = Net(num_classes=len(classes))
     print("Model Summary")
